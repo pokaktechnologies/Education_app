@@ -104,4 +104,10 @@ class Content(models.Model):
         return self.title
 
 
+class Course(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
