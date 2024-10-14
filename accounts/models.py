@@ -9,6 +9,7 @@ class User(AbstractUser):
     is_creator = models.BooleanField(default=False)
     is_student = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
+    full_name = models.CharField(max_length=255)
     GENDER_CHOICES = [
         ('M', 'Male'),
         ('F', 'Female'),
@@ -102,12 +103,39 @@ class Content(models.Model):
 
     def __str__(self):
         return self.title
+    
 
-
-class Course(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
+        
+class Topic(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    is_favourite = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return self.title
+    
+class Note(models.Model):
+    topic = models.ForeignKey(Topic, related_name='notes', on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f'Note for {self.topic.title}'
+
+class RelatedTopic(models.Model):
+    topic = models.ForeignKey(Topic, related_name='related_topics', on_delete=models.CASCADE)
+    related_topic = models.ForeignKey(Topic, related_name='related_to', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'Related: {self.related_topic.title} to {self.topic.title}'
+    
+
+class Subscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    date_subscribed = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} subscribed to {self.subject.name}"

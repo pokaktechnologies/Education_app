@@ -24,31 +24,7 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.views import APIView
 from django.contrib.auth import authenticate
-from .serializers import UserSerializer, StudentProfileSerializer
-
-class RegisterStudentView(APIView):
-    def post(self, request):
-        user_serializer = UserSerializer(data=request.data)
-        if user_serializer.is_valid():
-            user = user_serializer.save()
-
-            student_data = {
-                'user': user.id,  # User is already created, assign the user instance
-                'mobile_number': request.data.get('mobile_number'),
-                'syllabus': request.data.get('syllabus'),
-                'standard': request.data.get('standard'),
-            }
-            student_serializer = StudentProfileSerializer(data=student_data)
-            if student_serializer.is_valid():
-                student_serializer.save(user=user)
-                return Response({'message': 'Student registered successfully'}, status=status.HTTP_201_CREATED)
-            else:
-                # If student profile creation fails, delete the created user
-                user.delete()
-                return Response(student_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def generate_email_otp(user):
@@ -60,7 +36,7 @@ def generate_email_otp(user):
         # Send the OTP via email
         subject = 'Your OTP for Verification'
         message = f'Your OTP is: {otp}'
-        from_email = 'aiswaryasurendran97@gmail.com'
+        from_email = 'adomax2003@gmail.com'
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list)
         
@@ -173,3 +149,24 @@ class LogoutView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         logout(request)
         return Response({"message": "Logout successful."}, status=status.HTTP_200_OK)
+    
+class SubjectListView(generics.ListAPIView):
+    serializer_class = SubjectSerializer
+
+    def get_queryset(self):
+        queryset = Subject.objects.all()
+        standard_id = self.request.query_params.get('standard_id')
+        if standard_id:
+            queryset = queryset.filter(standard_id=standard_id)
+        return queryset
+
+class ChapterListView(generics.ListAPIView):
+    serializer_class = ChapterSerializer
+
+    def get_queryset(self):
+        subject_id = self.kwargs['subject_id']
+        return Chapter.objects.filter(subject_id=subject_id)
+    
+class TopicDetailView(generics.RetrieveAPIView):
+    queryset = Topic.objects.all()
+    serializer_class = TopicSerializer

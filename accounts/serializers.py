@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User,OTP,StudentProfile, Syllabus, Standard
+from .models import User, OTP, Subject,Chapter, Topic, Note, RelatedTopic, Subscription
 import random
 
 
@@ -15,26 +15,39 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
         return data
     
-class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+class SubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subject
+        fields = ['id', 'name', 'standard']
+
+class ChapterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chapter
+        fields = ['id', 'name', 'subject']
+
+
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Note
+        fields = ['id', 'content', 'created_at']  # Specify fields to be serialized
+
+class RelatedTopicSerializer(serializers.ModelSerializer):
+    related_topic = serializers.StringRelatedField()  # This will show the title of the related topic
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'gender']
+        model = RelatedTopic
+        fields = ['related_topic']  # Only the related topic title
 
-    def create(self, validated_data):
-        password = validated_data.pop('password')
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
-
-class StudentProfileSerializer(serializers.ModelSerializer):
+class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StudentProfile
-        fields = ['mobile_number', 'syllabus', 'standard']
+        model = Subscription
+        fields = ['id', 'user', 'topic', 'subscribed_at']  # Specify fields to be serialized
 
-    def create(self, validated_data):
-        student_profile = StudentProfile(**validated_data)
-        student_profile.save()
-        return student_profile
+class TopicSerializer(serializers.ModelSerializer):
+    chapters = ChapterSerializer(many=True, read_only=True)
+    notes = NoteSerializer(many=True, read_only=True)
+    related_topics = RelatedTopicSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Topic
+        fields = ['id', 'title', 'description', 'is_favourite', 'chapters', 'notes', 'related_topics']  # Specify fields to be serialized
